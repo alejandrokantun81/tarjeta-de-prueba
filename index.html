@@ -8,13 +8,237 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body { margin: 0; font-family: sans-serif; } textarea { font-family: inherit; }</style>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    textarea { font-family: inherit; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
     const { useState } = React;
-    // ... (el código JSX de tu componente aquí)
+
+    const TriangleIcon = ({ filled }) => (
+      <svg width="20" height="20" viewBox="0 0 24 24"
+        fill={filled ? "#1e293b" : "none"}
+        stroke={filled ? "#1e293b" : "#cbd5e1"} strokeWidth="1.5">
+        <polygon points="12,3 22,21 2,21"/>
+      </svg>
+    );
+    const DollarIcon = ({ filled }) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke={filled ? "#1e293b" : "#cbd5e1"} strokeWidth={filled ? 2.5 : 2}>
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v12M9 9a3 3 0 0 1 6 0c0 1.5-1.5 2.5-3 3s-3 1.5-3 3a3 3 0 0 0 6 0"/>
+      </svg>
+    );
+    const ThumbsIcon = ({ filled }) => (
+      <svg width="20" height="20" viewBox="0 0 24 24"
+        fill={filled ? "#1e293b" : "none"}
+        stroke={filled ? "#1e293b" : "#cbd5e1"} strokeWidth="2">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
+        <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+      </svg>
+    );
+    const ClockIcon = ({ filled }) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke={filled ? "#1e293b" : "#cbd5e1"} strokeWidth={filled ? 2.5 : 2}>
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+    );
+    const DownloadIcon = () => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    );
+
+    const Rating = ({ field, value, onChange, Icon }) => (
+      <div style={{display:'flex', gap:'4px'}}>
+        {[1,2,3].map(i => (
+          <button key={i}
+            onClick={() => onChange(field, value === i ? 0 : i)}
+            style={{background:'none',border:'none',padding:0,cursor:'pointer',
+              display:'inline-flex', transform:'scale(1)', transition:'transform 0.1s'}}
+            onMouseEnter={e => e.currentTarget.style.transform='scale(1.15)'}
+            onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+            <Icon filled={value >= i} />
+          </button>
+        ))}
+      </div>
+    );
+
+    const TarjetaDePrueba = () => {
+      const [f, setF] = useState({
+        nombrePrueba:"", plazoLimite:"", asignadoA:"", duracion:"",
+        hipotesis:"", criticidad:0, pruebaAccion:"", pruebaPasos:"",
+        costoPrueba:0, confiabilidadDatos:0, metrica:"",
+        tiempoRequerido:0, criteriosExito:""
+      });
+
+      const set = e => setF(p => ({...p, [e.target.name]: e.target.value}));
+      const rate = (k, v) => setF(p => ({...p, [k]: v}));
+
+      const exportCSV = () => {
+        const h = ["Nombre de la Prueba","Plazo Límite","Asignado a","Duración",
+          "Hipótesis","Criticidad (1-3)","Acción de Prueba","Pasos de Prueba",
+          "Costo (1-3)","Confiabilidad (1-3)","Métrica","Tiempo (1-3)","Criterios de Éxito"];
+        const r = [f.nombrePrueba,f.plazoLimite,f.asignadoA,f.duracion,
+          f.hipotesis,f.criticidad,f.pruebaAccion,f.pruebaPasos,
+          f.costoPrueba,f.confiabilidadDatos,f.metrica,f.tiempoRequerido,f.criteriosExito
+        ].map(v => `"${String(v||'').replace(/"/g,'""')}"`);
+        const csv = "\uFEFF" + h.join(",") + "\n" + r.join(",");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+        a.download = `Tarjeta_${f.nombrePrueba.replace(/\s+/g,'_')||'Prueba'}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      };
+
+      const BG = "#B7DE25";
+      const DARK = "#1e293b";
+
+      const inp = {width:"100%",background:"transparent",border:"none",
+        outline:"none",fontFamily:"inherit",fontSize:"16px",color:"#334155"};
+      const ta = {...inp, resize:"none"};
+      const taLg = {...ta, fontSize:"20px"};
+
+      const section = {background:"white",padding:"32px",marginBottom:"32px"};
+      const stepLabel = {fontSize:"12px",fontWeight:"bold",textTransform:"uppercase",
+        letterSpacing:"0.05em",marginBottom:"8px",display:"block"};
+      const bigLabel = {fontSize:"22px",fontWeight:"900",color:DARK};
+      const smallLabel = {fontSize:"11px",fontWeight:"bold",textTransform:"uppercase",
+        color:"#94a3b8",letterSpacing:"0.05em"};
+
+      return (
+        <div style={{minHeight:"100vh",background:BG,padding:"48px",fontFamily:"sans-serif"}}>
+          <div style={{maxWidth:"896px",margin:"0 auto"}}>
+
+            {/* Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+              borderBottom:`2px solid rgba(0,0,0,0.1)`,paddingBottom:"24px",marginBottom:"32px",
+              flexWrap:"wrap",gap:"16px"}}>
+              <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+                <h1 style={{margin:0,fontSize:"clamp(40px,6vw,60px)",fontWeight:"900",
+                  letterSpacing:"-0.03em",color:DARK}}>
+                  Tarjeta de Prueba
+                </h1>
+                <a href="https://alejandrokantun81.github.io/instrucciones_testcard/#que-es"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{display:"inline-block",background:DARK,color:BG,fontWeight:"bold",
+                    textTransform:"uppercase",fontSize:"11px",letterSpacing:"0.1em",
+                    padding:"8px 20px",borderRadius:"4px",textDecoration:"none"}}>
+                  Instrucciones
+                </a>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                <div style={{width:"32px",height:"32px",background:DARK,borderRadius:"50%",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  color:BG,fontWeight:"bold",fontStyle:"italic",fontSize:"18px"}}>s</div>
+                <span style={{fontWeight:"bold",fontSize:"24px",letterSpacing:"-0.02em",color:DARK}}>
+                  Strategyzer
+                </span>
+              </div>
+            </div>
+
+            {/* Metadata */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",
+              gap:"16px",marginBottom:"40px"}}>
+              {[
+                {label:"Nombre de la prueba",name:"nombrePrueba",ph:"Introduzca nombre..."},
+                {label:"Plazo límite",name:"plazoLimite",ph:"DD/MM/AAAA"},
+                {label:"Asignado a",name:"asignadoA",ph:"Persona o equipo..."},
+                {label:"Duración",name:"duracion",ph:"Ejem: 2 semanas"},
+              ].map(({label,name,ph}) => (
+                <div key={name} style={{background:"white",padding:"12px",
+                  display:"flex",alignItems:"center",gap:"12px"}}>
+                  <label style={{...smallLabel,whiteSpace:"nowrap"}}>{label}</label>
+                  <input type="text" name={name} value={f[name]} onChange={set}
+                    placeholder={ph} style={inp} />
+                </div>
+              ))}
+            </div>
+
+            {/* Paso 1 */}
+            <span style={stepLabel}>Paso 1: Hipótesis</span>
+            <div style={section}>
+              <span style={bigLabel}>Creemos que </span>
+              <textarea name="hipotesis" value={f.hipotesis} onChange={set}
+                rows="2" placeholder="Describa la hipótesis fundamental..." style={taLg}/>
+              <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",
+                gap:"12px",marginTop:"24px"}}>
+                <span style={smallLabel}>Crítico:</span>
+                <Rating field="criticidad" value={f.criticidad} onChange={rate} Icon={TriangleIcon}/>
+              </div>
+            </div>
+
+            {/* Paso 2 */}
+            <span style={stepLabel}>Paso 2: Prueba</span>
+            <div style={section}>
+              <span style={bigLabel}>Para verificarlo, nosotros </span>
+              <textarea name="pruebaAccion" value={f.pruebaAccion} onChange={set}
+                rows="1" placeholder="Defina la acción empírica primaria..." style={taLg}/>
+              <hr style={{border:"none",borderTop:"2px dotted #cbd5e1",margin:"16px 0"}}/>
+              <span style={bigLabel}>Para verificar, haremos </span>
+              <textarea name="pruebaPasos" value={f.pruebaPasos} onChange={set}
+                rows="2" placeholder="Desglose los pasos operativos..." style={taLg}/>
+              <div style={{display:"flex",justifyContent:"flex-end",flexWrap:"wrap",
+                gap:"24px",marginTop:"24px",alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                  <span style={smallLabel}>Costo de la prueba:</span>
+                  <Rating field="costoPrueba" value={f.costoPrueba} onChange={rate} Icon={DollarIcon}/>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                  <span style={smallLabel}>Confiabilidad de los datos:</span>
+                  <Rating field="confiabilidadDatos" value={f.confiabilidadDatos} onChange={rate} Icon={ThumbsIcon}/>
+                </div>
+              </div>
+            </div>
+
+            {/* Paso 3 */}
+            <span style={stepLabel}>Paso 3: Métrica</span>
+            <div style={section}>
+              <span style={bigLabel}>Y mediremos </span>
+              <textarea name="metrica" value={f.metrica} onChange={set}
+                rows="2" placeholder="Identifique las variables cuantitativas..." style={taLg}/>
+              <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",
+                gap:"12px",marginTop:"24px"}}>
+                <span style={smallLabel}>Tiempo requerido:</span>
+                <Rating field="tiempoRequerido" value={f.tiempoRequerido} onChange={rate} Icon={ClockIcon}/>
+              </div>
+            </div>
+
+            {/* Paso 4 */}
+            <span style={stepLabel}>Paso 4: Criterios</span>
+            <div style={section}>
+              <span style={bigLabel}>Tenemos razón si </span>
+              <textarea name="criteriosExito" value={f.criteriosExito} onChange={set}
+                rows="2" placeholder="Establezca el umbral numérico inamovible..." style={taLg}/>
+            </div>
+
+            {/* Footer */}
+            <div style={{display:"flex",justifyContent:"space-between",
+              alignItems:"center",flexWrap:"wrap",gap:"16px"}}>
+              <small style={{color:"rgba(30,41,59,0.7)",fontSize:"11px",fontWeight:"500"}}>
+                © Strategyzer AG / Los creadores de Business Model Generation y Strategyzer
+              </small>
+              <button onClick={exportCSV}
+                style={{display:"flex",alignItems:"center",gap:"8px",
+                  background:DARK,color:"white",fontWeight:"bold",
+                  textTransform:"uppercase",fontSize:"13px",letterSpacing:"0.08em",
+                  padding:"12px 24px",borderRadius:"4px",border:"none",cursor:"pointer"}}>
+                <DownloadIcon/> Exportar Datos a CSV
+              </button>
+            </div>
+
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<TarjetaDePrueba />);
   </script>
 </body>
 </html>
